@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
-	"strings"
+	"strconv"
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
@@ -17,7 +17,17 @@ import (
 	"github.com/tdewolff/minify/xml"
 )
 
+var m *minify.M
+
 func init() {
+	m = minify.New()
+	m.AddFunc("text/css", css.Minify)
+	m.AddFunc("text/html", html.Minify)
+	m.AddFunc("text/javascript", js.Minify)
+	m.AddFunc("image/svg+xml", svg.Minify)
+	m.AddFuncRegexp(regexp.MustCompile("[/+]json$"), json.Minify)
+	m.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
+
 	caddy.RegisterPlugin("minify", caddy.Plugin{
 		ServerType: "http",
 		Action:     setup,
@@ -37,6 +47,7 @@ func setup(c *caddy.Controller) error {
 	return nil
 }
 
+// CaddyMinify is [finish this]
 type CaddyMinify struct {
 	Next httpserver.Handler
 }
@@ -44,31 +55,41 @@ type CaddyMinify struct {
 // ServeHTTP is the main function of the whole plugin that routes every single
 // request to its function.
 func (h CaddyMinify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	if strings.HasSuffix(r.URL.Path, ".css") {
+	rec := httptest.NewRecorder()
+	code, err := h.Next.ServeHTTP(rec, r)
+	data := rec.Body.Bytes()
 
-		rec := httptest.NewRecorder()
-
-		code, err := h.Next.ServeHTTP(rec, r)
-
-		m := minify.New()
-		m.AddFunc("text/css", css.Minify)
-		m.AddFunc("text/html", html.Minify)
-		m.AddFunc("text/javascript", js.Minify)
-		m.AddFunc("image/svg+xml", svg.Minify)
-		m.AddFuncRegexp(regexp.MustCompile("[/+]json$"), json.Minify)
-		m.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
-
-		b, err := m.Bytes("text/css", rec.Body.Bytes())
-		if err != nil {
-			panic(err)
-		}
-
-		w.Write(b)
-
-		//	w.Write(rec.Body.Bytes())
-
-		return code, err
+	// copy the original headers first
+	for k, v := range rec.Header() {
+		w.Header()[k] = v
 	}
 
-	return h.Next.ServeHTTP(w, r)
+	w.WriteHeader(code)
+
+	if val, ok := rec.Header()["Content-Type"]; ok {
+		r := regexp.MustCompile(`(\w+\/[\w-]+)`)
+		matches := r.FindStringSubmatch(val[0])
+
+		if len(matches) != 0 && canBeMinified(matches[0]) {
+			data, err = m.Bytes(matches[0], rec.Body.Bytes())
+			if err != nil {
+				return 500, err
+			}
+		}
+	}
+
+	w.Header().Set("Content-Length", strconv.Itoa(len(string(data))))
+	w.Write(data)
+	return code, nil
+}
+
+func canBeMinified(mediatype string) bool {
+	switch mediatype {
+	case "text/css", "text/html", "text/javascript", "image/svg+xml":
+		return true
+	}
+
+	// add regext
+
+	return false
 }
