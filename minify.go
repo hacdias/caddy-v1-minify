@@ -1,8 +1,9 @@
 package minify
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"regexp"
 	"strconv"
 	"strings"
@@ -39,48 +40,8 @@ func init() {
 	})
 }
 
-// Setup is the init function of Caddy plugins and it configures the whole
-// middleware thing.
-func setup(c *caddy.Controller) error {
-	cnf := httpserver.GetConfig(c.Key)
-	excludes := []string{}
-	basePath := "/"
-
-	for c.Next() {
-		args := c.RemainingArgs()
-
-		switch len(args) {
-		case 1:
-			basePath = args[0]
-			basePath = strings.TrimSuffix(basePath, "/")
-			basePath += "/"
-		}
-
-		for c.NextBlock() {
-			switch c.Val() {
-			case "exclude":
-				if !c.NextArg() {
-					return c.ArgErr()
-				}
-				excludes = strings.Split(c.Val(), " ")
-			}
-		}
-	}
-
-	mid := func(next httpserver.Handler) httpserver.Handler {
-		return CaddyMinify{
-			Next:     next,
-			Excludes: excludes,
-			BasePath: basePath,
-		}
-	}
-
-	cnf.AddMiddleware(mid)
-	return nil
-}
-
-// CaddyMinify is [finish this]
-type CaddyMinify struct {
+// Minify is [finish this]
+type Minify struct {
 	Next     httpserver.Handler
 	Excludes []string
 	BasePath string
@@ -88,40 +49,33 @@ type CaddyMinify struct {
 
 // ServeHTTP is the main function of the whole plugin that routes every single
 // request to its function.
-func (h CaddyMinify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+func (h Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	if httpserver.Path(r.URL.Path).Matches(h.BasePath) {
 		if isExcluded(strings.Replace(r.URL.Path, h.BasePath, "/", 1), h.Excludes) {
 			return h.Next.ServeHTTP(w, r)
 		}
 
-		rec := httptest.NewRecorder()
-		code, err := h.Next.ServeHTTP(rec, r)
-		data := rec.Body.Bytes()
+		b := bytes.NewBuffer(nil)
+		rw := &minifyResponseWriter{b, w}
+		h.Next.ServeHTTP(rw, r)
 
-		if val, ok := rec.Header()["Content-Type"]; ok {
-			r := regexp.MustCompile(`(\w+\/[\w-]+)`)
-			matches := r.FindStringSubmatch(val[0])
-
-			if len(matches) != 0 && canBeMinified(matches[0]) {
-				data, err = m.Bytes(matches[0], data)
-				if err != nil {
-					return 500, err
-				}
+		contentType := http.DetectContentType(b.Bytes())
+		fmt.Println(contentType)
+		if canBeMinified(contentType) {
+			fmt.Println("he")
+			data, err := m.Bytes(contentType, b.Bytes())
+			if err != nil {
+				return 500, err
 			}
+			rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
+			w.Write(data)
+			return 0, nil
 		}
 
-		// copy the original headers
-		for k, v := range rec.Header() {
-			if k == "Content-Length" {
-				w.Header().Set("Content-Length", strconv.Itoa(len(data)))
-				continue
-			}
+		rw.Header().Set("Content-Length", strconv.Itoa(len(b.Bytes())))
+		w.Write(b.Bytes())
+		return 0, nil
 
-			w.Header()[k] = v
-		}
-
-		w.Write(data)
-		return code, err
 	}
 
 	return h.Next.ServeHTTP(w, r)
