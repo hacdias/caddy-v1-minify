@@ -19,9 +19,9 @@ func (w *minifyResponseWriter) WriteHeader(code int) {
 }
 
 func (w *minifyResponseWriter) Write(b []byte) (int, error) {
-	if w.Header().Get("Content-Type") == "" {
-		w.Header().Set("Content-Type", http.DetectContentType(b))
-	}
+	//	if w.Header().Get("Content-Type") == "" {
+	//		w.Header().Set("Content-Type", http.DetectContentType(b))
+	//	}
 	return w.Writer.Write(b)
 }
 

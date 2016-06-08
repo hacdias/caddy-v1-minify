@@ -2,7 +2,7 @@ package minify
 
 import (
 	"bytes"
-	"fmt"
+	"mime"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -59,10 +59,9 @@ func (h Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 		rw := &minifyResponseWriter{b, w}
 		h.Next.ServeHTTP(rw, r)
 
-		contentType := http.DetectContentType(b.Bytes())
-		fmt.Println(contentType)
+		contentType, _, _ := mime.ParseMediaType(w.Header().Get("Content-Type"))
+
 		if canBeMinified(contentType) {
-			fmt.Println("he")
 			data, err := m.Bytes(contentType, b.Bytes())
 			if err != nil {
 				return 500, err
