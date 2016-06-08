@@ -1,0 +1,1 @@
+# Minify plugin for Caddy

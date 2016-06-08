@@ -1,0 +1,7 @@
+assets.go
+node_modules
+.sass-cache
+temp
+copied_file.txt
+builds
+release
