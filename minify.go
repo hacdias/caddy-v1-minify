@@ -59,12 +59,10 @@ func (h CaddyMinify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, err
 	code, err := h.Next.ServeHTTP(rec, r)
 	data := rec.Body.Bytes()
 
-	// copy the original headers first
+	// copy the original headers
 	for k, v := range rec.Header() {
 		w.Header()[k] = v
 	}
-
-	w.WriteHeader(code)
 
 	if val, ok := rec.Header()["Content-Type"]; ok {
 		r := regexp.MustCompile(`(\w+\/[\w-]+)`)
@@ -78,9 +76,10 @@ func (h CaddyMinify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, err
 		}
 	}
 
-	w.Header().Set("Content-Length", strconv.Itoa(len(string(data))))
+	w.WriteHeader(code)
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.Write(data)
-	return code, nil
+	return code, err
 }
 
 func canBeMinified(mediatype string) bool {
@@ -89,7 +88,7 @@ func canBeMinified(mediatype string) bool {
 		return true
 	}
 
-	// add regext
+	// add regext for "[/+]json$" and "[/+]xml$"
 
 	return false
 }
