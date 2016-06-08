@@ -5,9 +5,12 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"strconv"
+	"strings"
+
+	"github.com/mholt/caddy/caddyhttp/httpserver"
 
 	"github.com/mholt/caddy"
-	"github.com/mholt/caddy/caddyhttp/httpserver"
+
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/html"
@@ -42,14 +45,36 @@ func init() {
 // middleware thing.
 func setup(c *caddy.Controller) error {
 	cnf := httpserver.GetConfig(c.Key)
-	config, err := parse(c)
+	excludes := []string{}
+	basePath := "/"
 
-	if err != nil {
-		return err
+	for c.Next() {
+		args := c.RemainingArgs()
+
+		switch len(args) {
+		case 1:
+			basePath = args[0]
+			basePath = strings.TrimSuffix(basePath, "/")
+			basePath += "/"
+		}
+
+		for c.NextBlock() {
+			switch c.Val() {
+			case "exclude":
+				if !c.NextArg() {
+					return c.ArgErr()
+				}
+				excludes = strings.Split(c.Val(), " ")
+			}
+		}
 	}
 
 	mid := func(next httpserver.Handler) httpserver.Handler {
-		return CaddyMinify{Next: next, Config: config}
+		return CaddyMinify{
+			Next:     next,
+			Excludes: excludes,
+			BasePath: basePath,
+		}
 	}
 
 	cnf.AddMiddleware(mid)
@@ -58,14 +83,18 @@ func setup(c *caddy.Controller) error {
 
 // CaddyMinify is [finish this]
 type CaddyMinify struct {
-	Next   httpserver.Handler
-	Config *config
+	Next     httpserver.Handler
+	Excludes []string
+	BasePath string
 }
 
 // ServeHTTP is the main function of the whole plugin that routes every single
 // request to its function.
 func (h CaddyMinify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	if httpserver.Path(r.URL.Path).Matches(h.Config.BasePath) {
+	if httpserver.Path(r.URL.Path).Matches(h.BasePath) {
+		if isExcluded(strings.Replace(r.URL.Path, h.BasePath, "/", 1), h.Excludes) {
+			return h.Next.ServeHTTP(w, r)
+		}
 
 		rec := httptest.NewRecorder()
 		code, err := h.Next.ServeHTTP(rec, r)
@@ -98,6 +127,16 @@ func (h CaddyMinify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, err
 	}
 
 	return h.Next.ServeHTTP(w, r)
+}
+
+func isExcluded(path string, excludes []string) bool {
+	for _, el := range excludes {
+		if httpserver.Path(path).Matches(el) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func canBeMinified(mediatype string) bool {

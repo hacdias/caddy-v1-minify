@@ -7,6 +7,6 @@ This package is a plugin for [Caddy](https://caddyserver.com) webserver that imp
 
 ```
 minify {DIR} {
-  exclude paths
+  exclude paths...
 }
 ```
