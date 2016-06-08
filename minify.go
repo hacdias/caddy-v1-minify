@@ -17,7 +17,11 @@ import (
 	"github.com/tdewolff/minify/xml"
 )
 
-var m *minify.M
+var (
+	m         *minify.M
+	jsonRegex = regexp.MustCompile("[/+]json$")
+	xmlRegex  = regexp.MustCompile("[/+]xml$")
+)
 
 func init() {
 	m = minify.New()
@@ -25,8 +29,8 @@ func init() {
 	m.AddFunc("text/html", html.Minify)
 	m.AddFunc("text/javascript", js.Minify)
 	m.AddFunc("image/svg+xml", svg.Minify)
-	m.AddFuncRegexp(regexp.MustCompile("[/+]json$"), json.Minify)
-	m.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
+	m.AddFuncRegexp(jsonRegex, json.Minify)
+	m.AddFuncRegexp(xmlRegex, xml.Minify)
 
 	caddy.RegisterPlugin("minify", caddy.Plugin{
 		ServerType: "http",
@@ -91,7 +95,13 @@ func canBeMinified(mediatype string) bool {
 		return true
 	}
 
-	// add regext for "[/+]json$" and "[/+]xml$"
+	if jsonRegex.FindString(mediatype) != "" {
+		return true
+	}
+
+	if xmlRegex.FindString(mediatype) != "" {
+		return true
+	}
 
 	return false
 }
