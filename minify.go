@@ -61,7 +61,9 @@ func (h CaddyMinify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, err
 
 	// copy the original headers
 	for k, v := range rec.Header() {
-		w.Header()[k] = v
+		if k != "Content-Length" {
+			w.Header()[k] = v
+		}
 	}
 
 	if val, ok := rec.Header()["Content-Type"]; ok {
@@ -69,7 +71,7 @@ func (h CaddyMinify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, err
 		matches := r.FindStringSubmatch(val[0])
 
 		if len(matches) != 0 && canBeMinified(matches[0]) {
-			data, err = m.Bytes(matches[0], rec.Body.Bytes())
+			data, err = m.Bytes(matches[0], data)
 			if err != nil {
 				return 500, err
 			}
