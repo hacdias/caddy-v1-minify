@@ -7,10 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mholt/caddy/caddyhttp/httpserver"
-
 	"github.com/mholt/caddy"
-
+	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/html"
