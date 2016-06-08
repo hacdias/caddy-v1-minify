@@ -42,9 +42,14 @@ func init() {
 // middleware thing.
 func setup(c *caddy.Controller) error {
 	cnf := httpserver.GetConfig(c.Key)
+	config, err := parse(c)
+
+	if err != nil {
+		return err
+	}
 
 	mid := func(next httpserver.Handler) httpserver.Handler {
-		return CaddyMinify{Next: next}
+		return CaddyMinify{Next: next, Config: config}
 	}
 
 	cnf.AddMiddleware(mid)
@@ -53,40 +58,46 @@ func setup(c *caddy.Controller) error {
 
 // CaddyMinify is [finish this]
 type CaddyMinify struct {
-	Next httpserver.Handler
+	Next   httpserver.Handler
+	Config *config
 }
 
 // ServeHTTP is the main function of the whole plugin that routes every single
 // request to its function.
 func (h CaddyMinify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	rec := httptest.NewRecorder()
-	code, err := h.Next.ServeHTTP(rec, r)
-	data := rec.Body.Bytes()
+	if httpserver.Path(r.URL.Path).Matches(h.Config.BasePath) {
 
-	if val, ok := rec.Header()["Content-Type"]; ok {
-		r := regexp.MustCompile(`(\w+\/[\w-]+)`)
-		matches := r.FindStringSubmatch(val[0])
+		rec := httptest.NewRecorder()
+		code, err := h.Next.ServeHTTP(rec, r)
+		data := rec.Body.Bytes()
 
-		if len(matches) != 0 && canBeMinified(matches[0]) {
-			data, err = m.Bytes(matches[0], data)
-			if err != nil {
-				return 500, err
+		if val, ok := rec.Header()["Content-Type"]; ok {
+			r := regexp.MustCompile(`(\w+\/[\w-]+)`)
+			matches := r.FindStringSubmatch(val[0])
+
+			if len(matches) != 0 && canBeMinified(matches[0]) {
+				data, err = m.Bytes(matches[0], data)
+				if err != nil {
+					return 500, err
+				}
 			}
 		}
-	}
 
-	// copy the original headers
-	for k, v := range rec.Header() {
-		if k == "Content-Length" {
-			w.Header().Set("Content-Length", strconv.Itoa(len(data)))
-			continue
+		// copy the original headers
+		for k, v := range rec.Header() {
+			if k == "Content-Length" {
+				w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+				continue
+			}
+
+			w.Header()[k] = v
 		}
 
-		w.Header()[k] = v
+		w.Write(data)
+		return code, err
 	}
 
-	w.Write(data)
-	return code, err
+	return h.Next.ServeHTTP(w, r)
 }
 
 func canBeMinified(mediatype string) bool {
