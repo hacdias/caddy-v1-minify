@@ -59,7 +59,16 @@ func (h Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 		rw := &minifyResponseWriter{b, w}
 		h.Next.ServeHTTP(rw, r)
 
-		contentType, _, _ := mime.ParseMediaType(w.Header().Get("Content-Type"))
+		contentType, _, err := mime.ParseMediaType(w.Header().Get("Content-Type"))
+
+		if err != nil {
+			// this musn't happen
+			return 500, err
+		}
+
+		if contentType == "" {
+			contentType = mime.TypeByExtension(r.URL.Path)
+		}
 
 		if canBeMinified(contentType) {
 			data, err := m.Bytes(contentType, b.Bytes())
