@@ -5,8 +5,14 @@
 
 This package is a plugin for [Caddy](https://caddyserver.com) webserver that implements a minifier that is able to compress CSS, HTML, JS, JSON, SVG and XML.
 
+#Syntax
+
 ```
-minify {DIR} {
-  exclude paths...
+minify  {
+	only foo...
+	exclude bar...
 }
 ```
+
++ **foo** (optional) are space separated single file paths or folders to include on minifying. By default the whole website will be minified. If this directive is set, only the files on the specified paths will be minified.
++ **bar** (optional) are space separated single file paths or folders to exclude from minifying.
