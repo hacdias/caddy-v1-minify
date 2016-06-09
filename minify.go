@@ -1,3 +1,5 @@
+// Package minify provides middlewarefor minifying each request before being
+// sent to the browser.
 package minify
 
 import (
@@ -8,39 +10,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/tdewolff/minify"
-	"github.com/tdewolff/minify/css"
-	"github.com/tdewolff/minify/html"
-	"github.com/tdewolff/minify/js"
-	"github.com/tdewolff/minify/json"
-	"github.com/tdewolff/minify/svg"
-	"github.com/tdewolff/minify/xml"
 )
 
 var (
-	m         *minify.M
+	minifier  *minify.M
 	jsonRegex = regexp.MustCompile("[/+]json$")
 	xmlRegex  = regexp.MustCompile("[/+]xml$")
 )
 
-func init() {
-	m = minify.New()
-	m.AddFunc("text/css", css.Minify)
-	m.AddFunc("text/html", html.Minify)
-	m.AddFunc("text/javascript", js.Minify)
-	m.AddFunc("image/svg+xml", svg.Minify)
-	m.AddFuncRegexp(jsonRegex, json.Minify)
-	m.AddFuncRegexp(xmlRegex, xml.Minify)
-
-	caddy.RegisterPlugin("minify", caddy.Plugin{
-		ServerType: "http",
-		Action:     setup,
-	})
-}
-
-// Minify is [finish this]
+// Minify is an http.Handler that is able to minify the request before it's sent
+// to the browser.
 type Minify struct {
 	Next     httpserver.Handler
 	Excludes []string
@@ -49,48 +30,59 @@ type Minify struct {
 
 // ServeHTTP is the main function of the whole plugin that routes every single
 // request to its function.
-func (h Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	if httpserver.Path(r.URL.Path).Matches(h.BasePath) {
-		if isExcluded(strings.Replace(r.URL.Path, h.BasePath, "/", 1), h.Excludes) {
-			return h.Next.ServeHTTP(w, r)
-		}
-
+func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+	// checks if the middlware should handle this request or not
+	if m.shouldHandle(r) {
 		b := bytes.NewBuffer(nil)
-		rw := &minifyResponseWriter{b, w}
-		h.Next.ServeHTTP(rw, r)
+		rw := &minifyResponseWriter{Writer: b, ResponseWriter: w}
+		code, err := m.Next.ServeHTTP(rw, r)
 
+		// gets the short version of Content-Type
 		contentType, _, err := mime.ParseMediaType(w.Header().Get("Content-Type"))
-
 		if err != nil {
 			// this musn't happen
 			return 500, err
 		}
 
+		// if the contentType is blank, try getting it by the extension
 		if contentType == "" {
 			contentType = mime.TypeByExtension(r.URL.Path)
 		}
 
-		if canBeMinified(contentType) {
-			data, err := m.Bytes(contentType, b.Bytes())
+		contentType = sanitizeContentType(contentType)
+
+		if contentType != "" {
+			var data []byte
+			data, err = minifier.Bytes(contentType, b.Bytes())
 			if err != nil {
 				return 500, err
 			}
 			rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
 			w.Write(data)
-			return 0, nil
+			return code, err
 		}
 
-		rw.Header().Set("Content-Length", strconv.Itoa(len(b.Bytes())))
+		w.Header().Set("Content-Length", strconv.Itoa(len(b.Bytes())))
 		w.Write(b.Bytes())
-		return 0, nil
-
+		return code, err
 	}
 
-	return h.Next.ServeHTTP(w, r)
+	return m.Next.ServeHTTP(w, r)
 }
 
-func isExcluded(path string, excludes []string) bool {
-	for _, el := range excludes {
+func (m Minify) shouldHandle(r *http.Request) bool {
+	if httpserver.Path(r.URL.Path).Matches(m.BasePath) {
+		if m.isExcluded(strings.Replace(r.URL.Path, m.BasePath, "/", 1)) {
+			return false
+		}
+		return true
+	}
+
+	return false
+}
+
+func (m Minify) isExcluded(path string) bool {
+	for _, el := range m.Excludes {
 		if httpserver.Path(path).Matches(el) {
 			return true
 		}
@@ -99,19 +91,28 @@ func isExcluded(path string, excludes []string) bool {
 	return false
 }
 
-func canBeMinified(mediatype string) bool {
-	switch mediatype {
-	case "text/css", "text/html", "text/javascript", "image/svg+xml":
-		return true
+func sanitizeContentType(mimetype string) string {
+	switch mimetype {
+	case "text/css":
+		return "css"
+	case "​text/javascript",
+		"text/x-javascript",
+		"application/x-javascript",
+		"application/javascript":
+		return "javascript"
+	case "image/svg+xml":
+		return "svg"
+	case "text/html":
+		return "html"
 	}
 
-	if jsonRegex.FindString(mediatype) != "" {
-		return true
+	if jsonRegex.FindString(mimetype) != "" {
+		return "json"
 	}
 
-	if xmlRegex.FindString(mediatype) != "" {
-		return true
+	if xmlRegex.FindString(mimetype) != "" {
+		return "xml"
 	}
 
-	return false
+	return ""
 }
