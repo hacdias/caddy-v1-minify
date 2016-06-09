@@ -70,6 +70,8 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	return m.Next.ServeHTTP(w, r)
 }
 
+// shouldHandle checks if the request should be handled with minifier
+// using the BasePath and Excludes
 func (m Minify) shouldHandle(r *http.Request) bool {
 	if httpserver.Path(r.URL.Path).Matches(m.BasePath) {
 		if m.isExcluded(strings.Replace(r.URL.Path, m.BasePath, "/", 1)) {
@@ -81,6 +83,7 @@ func (m Minify) shouldHandle(r *http.Request) bool {
 	return false
 }
 
+// isExcluded checks if the current path is excluded or not
 func (m Minify) isExcluded(path string) bool {
 	for _, el := range m.Excludes {
 		if httpserver.Path(path).Matches(el) {
@@ -91,6 +94,8 @@ func (m Minify) isExcluded(path string) bool {
 	return false
 }
 
+// sanitizeContentType simplifies the content type of the file to be used
+// with the minifier
 func sanitizeContentType(mimetype string) string {
 	switch mimetype {
 	case "text/css":
