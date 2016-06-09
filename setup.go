@@ -34,7 +34,7 @@ func init() {
 // setup configures the middlware.
 func setup(c *caddy.Controller) error {
 	cnf := httpserver.GetConfig(c.Key)
-	excludes, basePath, err := parse(c)
+	excludes, includes, err := parse(c)
 
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func setup(c *caddy.Controller) error {
 		return Minify{
 			Next:     next,
 			Excludes: excludes,
-			BasePath: basePath,
+			Includes: includes,
 		}
 	}
 
@@ -53,30 +53,28 @@ func setup(c *caddy.Controller) error {
 }
 
 // parse parses the configuration of the plugin using caddy.Controller.
-func parse(c *caddy.Controller) ([]string, string, error) {
+func parse(c *caddy.Controller) ([]string, []string, error) {
 	excludes := []string{}
-	basePath := "/"
+	includes := []string{"/"}
 
 	for c.Next() {
 		args := c.RemainingArgs()
-
-		switch len(args) {
-		case 1:
-			basePath = args[0]
-			basePath = strings.TrimSuffix(basePath, "/")
-			basePath += "/"
-		}
 
 		for c.NextBlock() {
 			switch c.Val() {
 			case "exclude":
 				if !c.NextArg() {
-					return []string{}, "", c.ArgErr()
+					return []string{}, []string{}, c.ArgErr()
 				}
 				excludes = strings.Split(c.Val(), " ")
+			case "only":
+				if !c.NextArg() {
+					return []string{}, []string{}, c.ArgErr()
+				}
+				includes = strings.Split(c.Val(), " ")
 			}
 		}
 	}
 
-	return excludes, basePath, nil
+	return excludes, includes, nil
 }

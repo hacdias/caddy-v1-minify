@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/tdewolff/minify"
@@ -23,9 +22,8 @@ var (
 // Minify is an http.Handler that is able to minify the request before it's sent
 // to the browser.
 type Minify struct {
-	Next     httpserver.Handler
-	Excludes []string
-	BasePath string
+	Next               httpserver.Handler
+	Excludes, Includes []string
 }
 
 // ServeHTTP is the main function of the whole plugin that routes every single
@@ -73,11 +71,10 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 // shouldHandle checks if the request should be handled with minifier
 // using the BasePath and Excludes
 func (m Minify) shouldHandle(r *http.Request) bool {
-	if httpserver.Path(r.URL.Path).Matches(m.BasePath) {
-		if m.isExcluded(strings.Replace(r.URL.Path, m.BasePath, "/", 1)) {
-			return false
+	for _, include := range m.Includes {
+		if httpserver.Path(r.URL.Path).Matches(include) && !m.isExcluded(r.URL.Path) {
+			return true
 		}
-		return true
 	}
 
 	return false
