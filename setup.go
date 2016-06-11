@@ -58,8 +58,6 @@ func parse(c *caddy.Controller) ([]string, []string, error) {
 	includes := []string{"/"}
 
 	for c.Next() {
-		args := c.RemainingArgs()
-
 		for c.NextBlock() {
 			switch c.Val() {
 			case "exclude":
