@@ -33,7 +33,7 @@ func init() {
 
 // setup configures the middlware.
 func setup(c *caddy.Controller) error {
-	cnf := httpserver.GetConfig(c.Key)
+	cnf := httpserver.GetConfig(c)
 	excludes, includes, err := parse(c)
 
 	if err != nil {
