@@ -8,11 +8,12 @@ This package is a plugin for [Caddy](https://caddyserver.com) webserver that imp
 #Syntax
 
 ```
-minify  {
-	only foo...
-	exclude bar...
+minify paths...  {
+	if    	a cond b
+   	if_op 	[and|or]
 }
 ```
 
-+ **foo** (optional) are space separated single file paths or folders to include on minifying. By default the whole website will be minified. If this directive is set, only the files on the specified paths will be minified.
-+ **bar** (optional) are space separated single file paths or folders to exclude from minifying.
++ **paths** are space separated file paths to minify. If nothing is specified, the whole website will be minified.
++ **if** specifies a condition. Multiple ifs are AND-ed together by default. **a** and **b** are any string and may use [request placeholders](https://caddyserver.com/docs/placeholders). **cond** is the condition, with possible values explained in [rewrite](https://caddyserver.com/docs/rewrite#if) (which also has an `if` statement).
++ **if_op** specifies how the ifs are evaluated; the default is `and`.

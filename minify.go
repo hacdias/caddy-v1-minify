@@ -4,7 +4,6 @@ package minify
 
 import (
 	"bytes"
-	"fmt"
 	"mime"
 	"net/http"
 	"regexp"
@@ -24,7 +23,8 @@ var (
 // to the browser.
 type Minify struct {
 	Next  httpserver.Handler
-	Rules Rules
+	Rules []httpserver.RequestMatcher
+	Paths []string
 }
 
 // ServeHTTP is the main function of the whole plugin that routes every single
@@ -72,31 +72,29 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 // shouldHandle checks if the request should be handled with minifier
 // using the BasePath and Excludes
 func (m Minify) shouldHandle(r *http.Request) bool {
-	for _, rule := range m.Rules.Matches {
-		if rule.Match(r) {
-			fmt.Println(rule)
-			return true
+	included := false
+
+	if len(m.Paths) > 0 {
+		for _, path := range m.Paths {
+			if httpserver.Path(r.URL.Path).Matches(path) {
+				included = true
+			}
+		}
+	} else {
+		included = true
+	}
+
+	if !included {
+		return false
+	}
+
+	for _, rule := range m.Rules {
+		if !rule.Match(r) {
+			return false
 		}
 	}
 
-	for _, include := range m.Rules.Includes {
-		if httpserver.Path(r.URL.Path).Matches(include) && !m.isExcluded(r.URL.Path) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// isExcluded checks if the current path is excluded or not
-func (m Minify) isExcluded(path string) bool {
-	for _, el := range m.Rules.Excludes {
-		if httpserver.Path(path).Matches(el) {
-			return true
-		}
-	}
-
-	return false
+	return true
 }
 
 // sanitizeContentType simplifies the content type of the file to be used

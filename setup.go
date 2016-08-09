@@ -12,12 +12,6 @@ import (
 	"github.com/tdewolff/minify/xml"
 )
 
-// Rules is a type that stores the rules to monify
-type Rules struct {
-	Excludes, Includes []string
-	Matches            []httpserver.RequestMatcher
-}
-
 // init initializes the minifier variable and configures the plugin on
 // Caddy webserver.
 func init() {
@@ -38,54 +32,33 @@ func init() {
 // setup configures the middlware.
 func setup(c *caddy.Controller) error {
 	cnf := httpserver.GetConfig(c)
-	rules, err := parse(c)
 
-	if err != nil {
-		return err
+	rules := []httpserver.RequestMatcher{}
+	paths := []string{}
+
+	for c.Next() {
+		paths = append(paths, c.RemainingArgs()...)
+
+		matcher, err := httpserver.SetupIfMatcher(c)
+		if err != nil {
+			return err
+		}
+
+		rules = append(rules, matcher)
+
+		// TODO: Remove this to break the plugin!
+		for c.NextBlock() {
+		}
 	}
 
 	mid := func(next httpserver.Handler) httpserver.Handler {
 		return Minify{
 			Next:  next,
 			Rules: rules,
+			Paths: paths,
 		}
 	}
 
 	cnf.AddMiddleware(mid)
 	return nil
-}
-
-// parse parses the configuration of the plugin using caddy.Controller.
-func parse(c *caddy.Controller) (Rules, error) {
-	rules := Rules{}
-
-	for c.Next() {
-		matcher, err := httpserver.SetupIfMatcher(c)
-		if err != nil {
-			return rules, err
-		}
-
-		rules.Matches = append(rules.Matches, matcher)
-
-		for c.NextBlock() {
-			if httpserver.IfMatcherKeyword(c) {
-				continue
-			}
-
-			switch c.Val() {
-			case "exclude":
-				if !c.NextArg() {
-					return rules, c.ArgErr()
-				}
-				rules.Excludes = append(rules.Excludes, c.Val())
-			case "include":
-				if !c.NextArg() {
-					return rules, c.ArgErr()
-				}
-				rules.Includes = append(rules.Includes, c.Val())
-			}
-		}
-	}
-
-	return rules, nil
 }
