@@ -68,6 +68,10 @@ func parse(c *caddy.Controller) (Rules, error) {
 		rules.Matches = append(rules.Matches, matcher)
 
 		for c.NextBlock() {
+			if httpserver.IfMatcherKeyword(c) {
+				continue
+			}
+
 			switch c.Val() {
 			case "exclude":
 				if !c.NextArg() {
