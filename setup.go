@@ -1,8 +1,6 @@
 package minify
 
 import (
-	"strings"
-
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/tdewolff/minify"
@@ -13,6 +11,12 @@ import (
 	"github.com/tdewolff/minify/svg"
 	"github.com/tdewolff/minify/xml"
 )
+
+// Rules is a type that stores the rules to monify
+type Rules struct {
+	Excludes, Includes []string
+	Matches            []httpserver.RequestMatcher
+}
 
 // init initializes the minifier variable and configures the plugin on
 // Caddy webserver.
@@ -34,7 +38,7 @@ func init() {
 // setup configures the middlware.
 func setup(c *caddy.Controller) error {
 	cnf := httpserver.GetConfig(c)
-	excludes, includes, err := parse(c)
+	rules, err := parse(c)
 
 	if err != nil {
 		return err
@@ -42,9 +46,8 @@ func setup(c *caddy.Controller) error {
 
 	mid := func(next httpserver.Handler) httpserver.Handler {
 		return Minify{
-			Next:     next,
-			Excludes: excludes,
-			Includes: includes,
+			Next:  next,
+			Rules: rules,
 		}
 	}
 
@@ -53,26 +56,32 @@ func setup(c *caddy.Controller) error {
 }
 
 // parse parses the configuration of the plugin using caddy.Controller.
-func parse(c *caddy.Controller) ([]string, []string, error) {
-	excludes := []string{}
-	includes := []string{"/"}
+func parse(c *caddy.Controller) (Rules, error) {
+	rules := Rules{}
 
 	for c.Next() {
+		matcher, err := httpserver.SetupIfMatcher(c)
+		if err != nil {
+			return rules, err
+		}
+
+		rules.Matches = append(rules.Matches, matcher)
+
 		for c.NextBlock() {
 			switch c.Val() {
 			case "exclude":
 				if !c.NextArg() {
-					return []string{}, []string{}, c.ArgErr()
+					return rules, c.ArgErr()
 				}
-				excludes = strings.Split(c.Val(), " ")
-			case "only":
+				rules.Excludes = append(rules.Excludes, c.Val())
+			case "include":
 				if !c.NextArg() {
-					return []string{}, []string{}, c.ArgErr()
+					return rules, c.ArgErr()
 				}
-				includes = strings.Split(c.Val(), " ")
+				rules.Includes = append(rules.Includes, c.Val())
 			}
 		}
 	}
 
-	return excludes, includes, nil
+	return rules, nil
 }
