@@ -36,11 +36,16 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 		rw := &minifyResponseWriter{Writer: b, ResponseWriter: w}
 		code, err := m.Next.ServeHTTP(rw, r)
 
+		// only handle if the status code is 200
+		if code != http.StatusOK {
+			return code, err
+		}
+
 		// gets the short version of Content-Type
 		contentType, _, err := mime.ParseMediaType(w.Header().Get("Content-Type"))
 		if err != nil {
 			// this musn't happen
-			return 500, err
+			return http.StatusInternalServerError, err
 		}
 
 		// if the contentType is blank, try getting it by the extension
@@ -54,7 +59,7 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 			var data []byte
 			data, err = minifier.Bytes(contentType, b.Bytes())
 			if err != nil {
-				return 500, err
+				return http.StatusInternalServerError, err
 			}
 			rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
 			w.Write(data)
