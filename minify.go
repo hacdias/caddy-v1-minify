@@ -42,25 +42,15 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 		}
 
 		// gets the short version of Content-Type
-		contentType, _, err := mime.ParseMediaType(w.Header().Get("Content-Type"))
-		if err != nil {
-			// this musn't happen
-			return http.StatusInternalServerError, err
-		}
+		contentType, _, _ := mime.ParseMediaType(w.Header().Get("Content-Type"))
 
-		// if the contentType is blank, try getting it by the extension
 		if contentType == "" {
 			contentType = mime.TypeByExtension(r.URL.Path)
 		}
 
-		contentType = sanitizeContentType(contentType)
-
 		if contentType != "" {
 			var data []byte
 			data, err = minifier.Bytes(contentType, b.Bytes())
-			if err != nil {
-				return http.StatusInternalServerError, err
-			}
 			rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
 			w.Write(data)
 			return code, err
@@ -100,32 +90,4 @@ func (m Minify) shouldHandle(r *http.Request) bool {
 	}
 
 	return true
-}
-
-// sanitizeContentType simplifies the content type of the file to be used
-// with the minifier
-func sanitizeContentType(mimetype string) string {
-	switch mimetype {
-	case "text/css":
-		return "css"
-	case "​text/javascript",
-		"text/x-javascript",
-		"application/x-javascript",
-		"application/javascript":
-		return "javascript"
-	case "image/svg+xml":
-		return "svg"
-	case "text/html":
-		return "html"
-	}
-
-	if jsonRegex.FindString(mimetype) != "" {
-		return "json"
-	}
-
-	if xmlRegex.FindString(mimetype) != "" {
-		return "xml"
-	}
-
-	return ""
 }

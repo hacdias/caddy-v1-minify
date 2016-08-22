@@ -1,6 +1,8 @@
 package minify
 
 import (
+	"regexp"
+
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/tdewolff/minify"
@@ -16,12 +18,13 @@ import (
 // Caddy webserver.
 func init() {
 	minifier = minify.New()
-	minifier.AddFunc("css", css.Minify)
-	minifier.AddFunc("html", html.Minify)
-	minifier.AddFunc("javascript", js.Minify)
-	minifier.AddFunc("svg", svg.Minify)
-	minifier.AddFunc("json", json.Minify)
-	minifier.AddFunc("xml", xml.Minify)
+	minifier.AddFunc("text/css", css.Minify)
+	minifier.AddFunc("text/html", html.Minify)
+	minifier.AddFunc("text/javascript", js.Minify)
+	minifier.AddFunc("image/svg+xml", svg.Minify)
+	minifier.AddFuncRegexp(regexp.MustCompile("[/+]json$"), json.Minify)
+	minifier.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
+	minifier.AddFuncRegexp(regexp.MustCompile("[/+]javascript$"), js.Minify)
 
 	caddy.RegisterPlugin("minify", caddy.Plugin{
 		ServerType: "http",
