@@ -4,20 +4,16 @@ package minify
 
 import (
 	"bytes"
+	"log"
 	"mime"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/tdewolff/minify"
 )
 
-var (
-	minifier  *minify.M
-	jsonRegex = regexp.MustCompile("[/+]json$")
-	xmlRegex  = regexp.MustCompile("[/+]xml$")
-)
+var minifier *minify.M
 
 // Minify is an http.Handler that is able to minify the request before it's sent
 // to the browser.
@@ -42,7 +38,11 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 		}
 
 		// gets the short version of Content-Type
-		contentType, _, _ := mime.ParseMediaType(w.Header().Get("Content-Type"))
+		contentType, _, err := mime.ParseMediaType(w.Header().Get("Content-Type"))
+
+		if err != nil {
+			log.Println(err)
+		}
 
 		if contentType == "" {
 			contentType = mime.TypeByExtension(r.URL.Path)
@@ -51,6 +51,10 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 		if contentType != "" {
 			var data []byte
 			data, err = minifier.Bytes(contentType, b.Bytes())
+			if err != nil {
+				log.Println(err)
+			}
+
 			rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
 			w.Write(data)
 			return code, err

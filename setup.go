@@ -23,7 +23,7 @@ func init() {
 	minifier.AddFunc("image/svg+xml", svg.Minify)
 	minifier.AddFuncRegexp(regexp.MustCompile("[/+]json$"), json.Minify)
 	minifier.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
-	minifier.AddFuncRegexp(regexp.MustCompile("[/+]javascript$"), js.Minify)
+	minifier.AddFuncRegexp(regexp.MustCompile("[/-]javascript$"), js.Minify)
 
 	caddy.RegisterPlugin("minify", caddy.Plugin{
 		ServerType: "http",
