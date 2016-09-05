@@ -7,7 +7,9 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/tdewolff/minify"
@@ -30,39 +32,45 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	if m.shouldHandle(r) {
 		b := bytes.NewBuffer(nil)
 		rw := &minifyResponseWriter{Writer: b, ResponseWriter: w}
-		code, err := m.Next.ServeHTTP(rw, r)
+		code, middlewareErr := m.Next.ServeHTTP(rw, r)
 
 		// only handle if the status code is 200
 		if code != http.StatusOK {
-			return code, err
+			return code, middlewareErr
 		}
 
 		// gets the short version of Content-Type
 		contentType, _, err := mime.ParseMediaType(w.Header().Get("Content-Type"))
 
+		// If there is an error, log it
+		// NOTE: this does not prevent the execution
 		if err != nil {
 			log.Println(err)
 		}
 
+		// If the content type is still blank, try getting it by the extension
 		if contentType == "" {
-			contentType = mime.TypeByExtension(r.URL.Path)
+			contentType = mime.TypeByExtension(filepath.Ext(r.URL.Path))
 		}
 
-		if contentType != "" {
-			var data []byte
-			data, err = minifier.Bytes(contentType, b.Bytes())
-			if err != nil {
-				log.Println(err)
-			}
-
-			rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
-			w.Write(data)
-			return code, err
+		// If the content type is still blank and the Path ends with a /,
+		// use the .html content type
+		if contentType == "" && strings.HasSuffix(r.URL.Path, "/") {
+			contentType = mime.TypeByExtension(".html")
 		}
 
-		w.Header().Set("Content-Length", strconv.Itoa(len(b.Bytes())))
-		w.Write(b.Bytes())
-		return code, err
+		var data []byte
+		data, err = minifier.Bytes(contentType, b.Bytes())
+
+		// Logs the error if it's not nil and different from Not Exist
+		// NOTE: this does not prevent the execution
+		if err != nil && err != minify.ErrNotExist {
+			log.Println(err)
+		}
+
+		rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
+		w.Write(data)
+		return code, middlewareErr
 	}
 
 	return m.Next.ServeHTTP(w, r)
