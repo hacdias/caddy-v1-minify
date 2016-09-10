@@ -36,6 +36,8 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 
 		// only handle if the status code is 200
 		if code != http.StatusOK {
+			rw.Header().Set("Content-Length", strconv.Itoa(len(b.Bytes())))
+			w.Write(b.Bytes())
 			return code, middlewareErr
 		}
 
