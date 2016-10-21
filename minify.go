@@ -63,8 +63,13 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 			log.Println(err)
 		}
 
-		rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
-		w.Write(data)
+		// Only send this header if the length is different from 0. It avoids
+		// errors with Basic Auth and more stuff
+		if length := len(data); length != 0 {
+			rw.Header().Set("Content-Length", strconv.Itoa(length))
+			w.Write(data)
+		}
+
 		return code, middlewareErr
 	}
 
