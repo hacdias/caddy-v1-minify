@@ -5,7 +5,7 @@
 
 This package is a plugin for [Caddy](https://caddyserver.com) webserver that implements a minifier that is able to compress CSS, HTML, JS, JSON, SVG and XML using [github.com/tdewolff/minify](https://github.com/tdewolff/minify).
 
-#Syntax
+# Syntax
 
 ```
 minify paths...  {
