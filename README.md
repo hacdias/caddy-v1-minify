@@ -17,3 +17,34 @@ minify paths...  {
 + **paths** are space separated file paths to minify. If nothing is specified, the whole website will be minified.
 + **if** specifies a condition. Multiple ifs are AND-ed together by default. **a** and **b** are any string and may use [request placeholders](https://caddyserver.com/docs/placeholders). **cond** is the condition, with possible values explained in [rewrite](https://caddyserver.com/docs/rewrite#if) (which also has an `if` statement).
 + **if_op** specifies how the ifs are evaluated; the default is `and`.
+
+
+### Examples
+
+Minify all of the supported files of the website:
+
+```
+minify
+```
+
+Only minify the contents of `/assets` folder:
+
+```
+minify /assets
+```
+
+Minify the whole website except `/api`:
+
+```
+minify  {
+    if {path} not_match ^(\/api).*
+}
+```
+
+Minify the files of `/assets` folder except `/assets/js`:
+
+```
+minify /assets {
+    if {path} not_match ^(\/assets\/js).*
+}
+```
