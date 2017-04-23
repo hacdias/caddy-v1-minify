@@ -1,7 +1,8 @@
 # minify
 
-[![community](https://img.shields.io/badge/community-forum-ff69b4.svg?style=flat-square)](https://forum.caddyserver.com)
-[![Documentation](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](http://godoc.org/github.com/hacdias/caddy-minify)
+[![Build](https://img.shields.io/travis/hacdias/caddy-minify.svg?style=flat-square)](https://travis-ci.org/hacdias/caddy-minify)
+[![community](https://img.shields.io/badge/community-forum-ff69b4.svg?style=flat-square)](https://caddy.community)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hacdias/caddy-minify?style=flat-square)](https://goreportcard.com/report/hacdias/caddy-minify)
 
 Caddy plugin that implements minification on-the-fly for CSS, HTML, JSON, SVG and XML. It uses [tdewolff's library](https://github.com/tdewolff/minify) so, let's thank him! You can download this plugin with Caddy on its [official download page](https://caddyserver.com/download).
 
