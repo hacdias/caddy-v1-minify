@@ -20,7 +20,7 @@ minify paths...  {
 + **if** specifies a condition. Multiple ifs are AND-ed together by default. **a** and **b** are any string and may use [request placeholders](https://caddyserver.com/docs/placeholders). **cond** is the condition, with possible values explained in [rewrite](https://caddyserver.com/docs/rewrite#if) (which also has an `if` statement).
 + **if_op** specifies how the ifs are evaluated; the default is `and`.
 + **disable** is used to indicate which minifiers to disable. By default, they're all activated.
-+ **minifier** sets **value** for **option** on that minifier. When the option is true or false, its omission is trated as `true`. The possible obtions are described bellow.
++ **minifier** sets **value** for **option** on that minifier. When the option is true or false, its omission is trated as `true`. The possible options are described bellow.
 
 ```
 html    keep_default_attr_vals  [true|false]
@@ -29,7 +29,6 @@ html    keep_end_tags           [true|false]
 html    keep_whitespace         [true|false]
 
 xml     keep_whitespace         [true|false]
-
 css     decimals integer
 svg     decimals integer
 ```
