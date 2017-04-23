@@ -22,16 +22,13 @@ minify paths...  {
 + **disable** is used to indicate which minifiers to disable. By default, they're all activated.
 + **minifier** sets **value** for **option** on that minifier. When the option is true or false, its omission is trated as `true`. The possible options are described bellow.
 
-```
-html    keep_default_attr_vals  [true|false]
-html    keep_document_tags      [true|false]
-html    keep_end_tags           [true|false]
-html    keep_whitespace         [true|false]
-
-xml     keep_whitespace         [true|false]
-css     decimals integer
-svg     decimals integer
-```
+| Minifier(s)   | Option                    | Value         | Description |
+| ------------- |-------------              | ----------    | ----------- |
+| css, svg      | decimals                  | integer       | Preserves default attribute values. |
+| xml, html     | keep_whitespace           | true\|false   | Preserve `html`, `head` and `body` tags. |
+| html          | keep_end_tags             | true\|false   | Preserves all end tags. |
+| html          | keep_document_tags        | true\|false   | Preserves whitespace between inline tags but still collapse multiple whitespace characters into one. |
+| html          | keep_default_attr_vals    | true\|false   | Number of decimals to preserve for numbers, `-1` means no trimming. |
 
 For more information about what does each option and how each minifier work, read the [documentation of tdewolff/minify](https://github.com/tdewolff/minify/blob/master/README.md).
 
