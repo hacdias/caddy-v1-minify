@@ -9,15 +9,32 @@ This package is a plugin for [Caddy](https://caddyserver.com) webserver that imp
 
 ```
 minify paths...  {
-	if    	a cond b
-   	if_op 	[and|or]
+    if    	    a cond b
+    if_op 	    [and|or]
+    disable     [js|css|html|json|svg|xml]
+    minifier    option value
 }
 ```
 
 + **paths** are space separated file paths to minify. If nothing is specified, the whole website will be minified.
 + **if** specifies a condition. Multiple ifs are AND-ed together by default. **a** and **b** are any string and may use [request placeholders](https://caddyserver.com/docs/placeholders). **cond** is the condition, with possible values explained in [rewrite](https://caddyserver.com/docs/rewrite#if) (which also has an `if` statement).
 + **if_op** specifies how the ifs are evaluated; the default is `and`.
++ **disable** is used to indicate which minifiers to disable. By default, they're all activated.
++ **minifier** sets **value** for **option** on that minifier. When the option is true or false, its omission is trated as `true`. The possible obtions are described bellow.
 
+```
+html    keep_default_attr_vals  [true|false]
+html    keep_document_tags      [true|false]
+html    keep_end_tags           [true|false]
+html    keep_whitespace         [true|false]
+
+xml     keep_whitespace         [true|false]
+
+css     decimals integer
+svg     decimals integer
+```
+
+For more information about what does each option and how each minifier work, read the [documentation of tdewolff/minify](https://github.com/tdewolff/minify/blob/master/README.md).
 
 ### Examples
 

@@ -1,7 +1,9 @@
 package minify
 
 import (
+	"errors"
 	"regexp"
+	"strconv"
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
@@ -18,12 +20,6 @@ import (
 // Caddy webserver.
 func init() {
 	minifier = minify.New()
-	minifier.AddFunc("text/css", css.Minify)
-	minifier.AddFunc("text/html", html.Minify)
-	minifier.AddFunc("image/svg+xml", svg.Minify)
-	minifier.AddFuncRegexp(regexp.MustCompile("[/+]json$"), json.Minify)
-	minifier.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
-	minifier.AddFuncRegexp(regexp.MustCompile("[/-]javascript$"), js.Minify)
 
 	caddy.RegisterPlugin("minify", caddy.Plugin{
 		ServerType: "http",
@@ -38,6 +34,15 @@ func setup(c *caddy.Controller) error {
 	rules := []httpserver.RequestMatcher{}
 	paths := []string{}
 
+	minifiers := map[string]minify.Minifier{
+		"css":  &css.Minifier{},
+		"html": &html.Minifier{},
+		"svg":  &svg.Minifier{},
+		"json": &json.Minifier{},
+		"xml":  &xml.Minifier{},
+		"js":   &js.Minifier{},
+	}
+
 	for c.Next() {
 		paths = append(paths, c.RemainingArgs()...)
 
@@ -48,8 +53,121 @@ func setup(c *caddy.Controller) error {
 
 		rules = append(rules, matcher)
 
-		// TODO: Remove this to break the plugin!
 		for c.NextBlock() {
+			if httpserver.IfMatcherKeyword(c) {
+				continue
+			}
+
+			switch opt := c.Val(); opt {
+			case "disable":
+				for c.NextArg() {
+					delete(minifiers, c.Val())
+				}
+			case "css", "svg":
+				if !c.NextArg() {
+					return c.ArgErr()
+				}
+
+				if _, ok := minifiers[opt]; !ok {
+					return errors.New("You have disabled " + opt + " minifier")
+				}
+
+				option := c.Val()
+				if option != "decimals" {
+					return c.ArgErr()
+				}
+
+				if !c.NextArg() {
+					return c.ArgErr()
+				}
+
+				decimals, err := strconv.Atoi(c.Val())
+				if err != nil {
+					return err
+				}
+
+				if opt == "css" {
+					minifiers["css"].(*css.Minifier).Decimals = decimals
+					continue
+				}
+
+				minifiers["svg"].(*svg.Minifier).Decimals = decimals
+			case "xml":
+				if !c.NextArg() {
+					return c.ArgErr()
+				}
+
+				if _, ok := minifiers["xml"]; !ok {
+					return errors.New("You have disabled xml minifier")
+				}
+
+				option := c.Val()
+				if option != "keep_whitespace" {
+					return c.ArgErr()
+				}
+
+				val := true
+
+				if !c.NextArg() {
+					minifiers["xml"].(*xml.Minifier).KeepWhitespace = val
+					continue
+				}
+
+				val, err = strconv.ParseBool(c.Val())
+				if err != nil {
+					return err
+				}
+
+				minifiers["xml"].(*xml.Minifier).KeepWhitespace = val
+			case "html":
+				if !c.NextArg() {
+					return c.ArgErr()
+				}
+
+				if _, ok := minifiers["html"]; !ok {
+					return errors.New("You have disabled html minifier")
+				}
+
+				option := c.Val()
+				val := true
+
+				if c.NextArg() {
+					val, err = strconv.ParseBool(c.Val())
+					if err != nil {
+						return err
+					}
+				}
+
+				switch option {
+				case "keep_default_attr_vals":
+					minifiers["html"].(*html.Minifier).KeepDefaultAttrVals = val
+				case "keep_document_tags":
+					minifiers["html"].(*html.Minifier).KeepDocumentTags = val
+				case "keep_end_tags":
+					minifiers["html"].(*html.Minifier).KeepEndTags = val
+				case "keep_whitespace":
+					minifiers["html"].(*html.Minifier).KeepWhitespace = val
+				default:
+					return errors.New("Unknown option " + option)
+				}
+			}
+		}
+	}
+
+	for name, fn := range minifiers {
+		switch name {
+		case "css":
+			minifier.Add("text/css", fn)
+		case "html":
+			minifier.Add("text/html", fn)
+		case "svg":
+			minifier.Add("image/svg+xml", fn)
+		case "json":
+			minifier.AddRegexp(regexp.MustCompile("[/+]json$"), fn)
+		case "xml":
+			minifier.AddRegexp(regexp.MustCompile("[/+]xml$"), fn)
+		case "js":
+			minifier.AddRegexp(regexp.MustCompile("[/-]javascript$"), fn)
 		}
 	}
 
