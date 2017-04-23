@@ -9,8 +9,8 @@ This package is a plugin for [Caddy](https://caddyserver.com) webserver that imp
 
 ```
 minify paths...  {
-    if    	    a cond b
-    if_op 	    [and|or]
+    if          a cond b
+    if_op       [and|or]
     disable     [js|css|html|json|svg|xml]
     minifier    option value
 }
