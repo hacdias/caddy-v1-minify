@@ -31,7 +31,8 @@ minify paths...  {
 | xml, html     | keep_whitespace           | true\|false   | Preserve `html`, `head` and `body` tags. |
 | html          | keep_end_tags             | true\|false   | Preserves all end tags. |
 | html          | keep_document_tags        | true\|false   | Preserves whitespace between inline tags but still collapse multiple whitespace characters into one. |
-| html          | keep_default_attr_vals    | true\|false   | Number of decimals to preserve for numbers, `-1` means no trimming. |
+| html          | keep_default_attr_vals    | true\|false   | Preserves default value attributes. |
+| html          | keep_conditional_comments    | true\|false   | Preserves all IE conditional comments. |
 
 For more information about what does each option and how each minifier work, read the [documentation of tdewolff/minify](https://github.com/tdewolff/minify/blob/master/README.md).
 

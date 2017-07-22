@@ -139,6 +139,8 @@ func setup(c *caddy.Controller) error {
 				}
 
 				switch option {
+				case "keep_conditional_comments":
+					minifiers["html"].(*html.Minifier).KeepConditionalComments = val
 				case "keep_default_attr_vals":
 					minifiers["html"].(*html.Minifier).KeepDefaultAttrVals = val
 				case "keep_document_tags":
