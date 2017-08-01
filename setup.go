@@ -35,9 +35,9 @@ func setup(c *caddy.Controller) error {
 	paths := []string{}
 
 	minifiers := map[string]minify.Minifier{
-		"css":  &css.Minifier{},
+		"css":  &css.Minifier{Decimals: -1},
+		"svg":  &svg.Minifier{Decimals: -1},
 		"html": &html.Minifier{},
-		"svg":  &svg.Minifier{},
 		"json": &json.Minifier{},
 		"xml":  &xml.Minifier{},
 		"js":   &js.Minifier{},
