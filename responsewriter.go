@@ -1,7 +1,10 @@
 package minify
 
 import (
+	"bufio"
+	"fmt"
 	"io"
+	"net"
 	"net/http"
 )
 
