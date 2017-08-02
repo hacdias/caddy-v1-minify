@@ -35,12 +35,12 @@ func setup(c *caddy.Controller) error {
 	paths := []string{}
 
 	minifiers := map[string]minify.Minifier{
-		"css":  &css.Minifier{Decimals: -1},
-		"svg":  &svg.Minifier{Decimals: -1},
-		"html": &html.Minifier{},
-		"json": &json.Minifier{},
-		"xml":  &xml.Minifier{},
-		"js":   &js.Minifier{},
+		"css":  css.DefaultMinifier,
+		"svg":  svg.DefaultMinifier,
+		"html": html.DefaultMinifier,
+		"json": json.DefaultMinifier,
+		"xml":  xml.DefaultMinifier,
+		"js":   js.DefaultMinifier,
 	}
 
 	for c.Next() {
