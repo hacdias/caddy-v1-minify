@@ -34,6 +34,16 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 		rw := &minifyResponseWriter{Writer: b, ResponseWriter: w}
 		code, middlewareErr := m.Next.ServeHTTP(rw, r)
 
+		// Bypass informational and redirection codes.
+		if (code >= 100 && code < 200) || (code >= 300 && code < 400) {
+			if length := b.Len(); length != 0 {
+				rw.Header().Set("Content-Length", strconv.Itoa(length))
+				w.Write(b.Bytes())
+			}
+
+			return code, middlewareErr
+		}
+
 		// gets the short version of Content-Type
 		contentType, _, err := mime.ParseMediaType(w.Header().Get("Content-Type"))
 
