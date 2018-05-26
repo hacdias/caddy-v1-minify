@@ -73,3 +73,12 @@ minify /assets {
     if {path} not_match ^(\/assets\/js).*
 }
 ```
+
+Customize the minifier options:
+
+```
+minify {
+    html keep_document_tags
+    html keep_whitespace
+}
+```
