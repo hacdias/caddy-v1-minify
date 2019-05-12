@@ -1,6 +1,6 @@
 # minify
 
-[![Build](https://img.shields.io/travis/hacdias/caddy-minify.svg?style=flat-square)](https://travis-ci.org/hacdias/caddy-minify)
+[![CircleCI branch](https://img.shields.io/circleci/project/github/hacdias/caddy-minify/master.svg?style=flat-square)](https://circleci.com/gh/hacdias/caddy-minify)
 [![community](https://img.shields.io/badge/community-forum-ff69b4.svg?style=flat-square)](https://caddy.community)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hacdias/caddy-minify?style=flat-square)](https://goreportcard.com/report/hacdias/caddy-minify)
 
