@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/mholt/caddy/caddyhttp/httpserver"
-	"github.com/tdewolff/minify"
+	"github.com/tdewolff/minify/v2"
 )
 
 var minifier *minify.M
