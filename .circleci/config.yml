@@ -6,8 +6,15 @@ jobs:
     steps:
       - checkout
       - run: golangci-lint run -v -D errcheck
+  build:
+    docker:
+      - image: hacdias/caddy-plugin-test:latest
+    steps:
+      - checkout
+      - run: caddy-build
 workflows:
   version: 2
   build-workflow:
     jobs:
       - lint
+      - build
