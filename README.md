@@ -28,9 +28,9 @@ minify paths...  {
 | Minifier(s)   | Option                    | Value         | Description |
 | ------------- |-------------              | ----------    | ----------- |
 | css, svg      | decimals                  | number        | Preserves default attribute values. |
-| xml, html     | keep_whitespace           | true\|false   | Preserve `html`, `head` and `body` tags. |
+| xml, html     | keep_whitespace           | true\|false   | Preserves whitespace between inline tags but still collapse multiple whitespace characters into one. |
 | html          | keep_end_tags             | true\|false   | Preserves all end tags. |
-| html          | keep_document_tags        | true\|false   | Preserves whitespace between inline tags but still collapse multiple whitespace characters into one. |
+| html          | keep_document_tags        | true\|false   | Preserve `html`, `head` and `body` tags. |
 | html          | keep_default_attr_vals    | true\|false   | Preserves default value attributes. |
 | html          | keep_conditional_comments    | true\|false   | Preserves all IE conditional comments. |
 
