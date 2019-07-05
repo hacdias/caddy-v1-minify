@@ -5,7 +5,7 @@ package minify
 import (
 	"net/http"
 
-	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/caddyserver/caddy/caddyhttp/httpserver"
 	"github.com/tdewolff/minify/v2"
 )
 
