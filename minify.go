@@ -24,9 +24,9 @@ type Minify struct {
 func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	// checks if the middlware should handle this request or not
 	if m.shouldHandle(r) {
-		mw := minifier.ResponseWriter(w, r)
-		defer mw.Close()
-		return m.Next.ServeHTTP(mw, r)
+		return m.Next.ServeHTTP(httpserver.ResponseWriterWrapper{
+			ResponseWriter: minifier.ResponseWriter(w, r),
+		}, r)
 	}
 
 	return m.Next.ServeHTTP(w, r)
