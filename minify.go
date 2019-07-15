@@ -26,7 +26,10 @@ func (m Minify) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	if m.shouldHandle(r) {
 		mw := minifier.ResponseWriter(w, r)
 		defer mw.Close()
-		return m.Next.ServeHTTP(mw, r)
+
+		return m.Next.ServeHTTP(httpserver.ResponseWriterWrapper{
+			ResponseWriter: mw,
+		}, r)
 	}
 
 	return m.Next.ServeHTTP(w, r)
