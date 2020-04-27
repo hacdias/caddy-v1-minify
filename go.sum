@@ -73,6 +73,8 @@ github.com/tdewolff/minify/v2 v2.7.2 h1:XA92QuWsrKji+TlBv03mPuzUpSWz97mE5nyISY84
 github.com/tdewolff/minify/v2 v2.7.2/go.mod h1:BkDSm8aMMT0ALGmpt7j3Ra7nLUgZL0qhyrAHXwxcy5w=
 github.com/tdewolff/minify/v2 v2.7.3 h1:ngzhF7SaunCtbsBjgm7WJzl9HdiKlA1gYC/Qyx9CVMo=
 github.com/tdewolff/minify/v2 v2.7.3/go.mod h1:BkDSm8aMMT0ALGmpt7j3Ra7nLUgZL0qhyrAHXwxcy5w=
+github.com/tdewolff/minify/v2 v2.7.4 h1:r0OZQ3QzWeDS5cXq53Bk4IFIBDZ7fiXIkw1a4bHONsw=
+github.com/tdewolff/minify/v2 v2.7.4/go.mod h1:BkDSm8aMMT0ALGmpt7j3Ra7nLUgZL0qhyrAHXwxcy5w=
 github.com/tdewolff/parse/v2 v2.3.6 h1:8BmWWtXCETG/psUVKSI5PJb6SOgj5bxZAvdp/PIcQUE=
 github.com/tdewolff/parse/v2 v2.3.6/go.mod h1:HansaqmN4I/U7L6/tUp0NcwT2tFO0F4EAWYGSDzkYNk=
 github.com/tdewolff/parse/v2 v2.3.9 h1:d8/K6XOLy5JVpLTG9Kx+SxA72rlm5OowFmVSVgtOlmM=
