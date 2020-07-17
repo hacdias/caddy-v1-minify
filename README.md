@@ -1,5 +1,7 @@
 # minify
 
+> ⚠️ This plugin is no longer maintained, nor is it compatible with Caddy 2+.
+
 [![CircleCI branch](https://img.shields.io/circleci/project/github/hacdias/caddy-minify/master.svg?style=flat-square)](https://circleci.com/gh/hacdias/caddy-minify)
 [![community](https://img.shields.io/badge/community-forum-ff69b4.svg?style=flat-square)](https://caddy.community)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hacdias/caddy-minify?style=flat-square)](https://goreportcard.com/report/hacdias/caddy-minify)
